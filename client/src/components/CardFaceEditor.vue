@@ -5,7 +5,7 @@
 			@focus.capture="outlineElement($event, 'name')"
 		>
 			<label for="card-name">Name</label>
-			<input id="card-name" v-model="modelValue.name" type="text" />
+			<input id="card-name" v-model="localValue.name" type="text" />
 		</div>
 		<div
 			@mouseenter="outlineElement($event, 'printed_name')"
@@ -14,24 +14,24 @@
 			<label for="card-printed-name">Printed Name</label>
 			<input
 				id="card-printed-name"
-				v-model="modelValue.printed_name"
+				v-model="localValue.printed_name"
 				type="text"
 			/>
-			<a @click="modelValue.printed_name = undefined">↺</a>
+			<a @click="localValue.printed_name = undefined">↺</a>
 		</div>
 		<div
 			@mouseenter="outlineElement($event, 'mana-cost')"
 			@focus.capture="outlineElement($event, 'mana-cost')"
 		>
 			<label for="card-mana-cost">Mana Cost</label>
-			<input id="card-mana-cost" v-model="modelValue.mana_cost" type="text" />
+			<input id="card-mana-cost" v-model="localValue.mana_cost" type="text" />
 		</div>
 		<div
 			@mouseenter="outlineElement($event, 'type-line')"
 			@focus.capture="outlineElement($event, 'type-line')"
 		>
 			<label for="card-type-line">Type Line</label>
-			<input id="card-type-line" v-model="modelValue.type_line" type="text" />
+			<input id="card-type-line" v-model="localValue.type_line" type="text" />
 		</div>
 		<div
 			@mouseenter="outlineElement($event, 'oracle')"
@@ -40,7 +40,7 @@
 			<label for="card-oracle">Oracle</label><br />
 			<textarea
 				id="card-oracle"
-				v-model="modelValue.oracle_text"
+				v-model="localValue.oracle_text"
 				cols="40"
 				rows="6"
 			/>
@@ -52,7 +52,7 @@
 			<label for="card-flavor">Flavor Text</label><br />
 			<textarea
 				id="card-flavor"
-				v-model="modelValue.flavor_text"
+				v-model="localValue.flavor_text"
 				cols="40"
 				rows="2"
 			/>
@@ -65,17 +65,17 @@
 			<input
 				id="card-power"
 				class="small-input"
-				v-model="modelValue.power"
+				v-model="localValue.power"
 				type="text"
 			/>
 			/
 			<input
 				id="card-toughness"
 				class="small-input"
-				v-model="modelValue.toughness"
+				v-model="localValue.toughness"
 				type="text"
 			/>
-			<a @click="modelValue.power = modelValue.toughness = undefined">↺</a>
+			<a @click="localValue.power = localValue.toughness = undefined">↺</a>
 		</div>
 		<div
 			@mouseenter="outlineElement($event, 'loyalty')"
@@ -85,12 +85,12 @@
 			<input
 				id="card-loyalty"
 				class="small-input"
-				v-model="modelValue.loyalty"
+				v-model="localValue.loyalty"
 				type="text"
 			/>
-			<a @click="modelValue.loyalty = undefined">↺</a>
+			<a @click="localValue.loyalty = undefined">↺</a>
 		</div>
-		<IllustrationEditor v-model="modelValue" v-if="illustrationEditor" />
+		<IllustrationEditor v-model="localValue" v-if="illustrationEditor" />
 		<div class="subsection">
 			<h3>Footer</h3>
 			<div
@@ -98,7 +98,7 @@
 				@focus.capture="outlineElement($event, 'artist-name')"
 			>
 				<label for="card-artist">Artist</label>
-				<input id="card-artist" v-model="modelValue.artist" type="text" />
+				<input id="card-artist" v-model="localValue.artist" type="text" />
 			</div>
 			<div
 				@mouseenter="outlineElement($event, 'collector-number')"
@@ -107,7 +107,7 @@
 				<label for="card-number">Number</label>
 				<input
 					id="card-number"
-					v-model="modelValue.collector_number"
+					v-model="localValue.collector_number"
 					type="text"
 				/>
 			</div>
@@ -116,20 +116,30 @@
 				@focus.capture="outlineElement($event, 'copyright')"
 			>
 				<label for="copyright">Copyright</label>
-				<input id="copyright" v-model="modelValue.copyright" type="text" />
-				<a @click="modelValue.copyright = undefined">↺</a>
+				<input id="copyright" v-model="localValue.copyright" type="text" />
+				<a @click="localValue.copyright = undefined">↺</a>
 			</div>
 		</div>
 	</div>
 </template>
 
 <script lang="ts">
+import { computed } from 'vue';
 import IllustrationEditor from "./IllustrationEditor.vue";
 export default {
 	components: { IllustrationEditor },
 	props: {
 		modelValue: { type: Object, required: true },
 		illustrationEditor: { type: Boolean, default: true },
+	},
+	emits: ['update:modelValue', 'outline'],
+	setup(props, { emit }) {
+		const localValue = computed({
+			get: () => props.modelValue,
+			set: (value) => emit('update:modelValue', value)
+		});
+
+		return { localValue };
 	},
 	methods: {
 		outlineElement(ev, el) {

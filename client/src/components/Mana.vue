@@ -1,11 +1,11 @@
 <template>
 	<div class="mana" :class="{ archive: archive }">
-		<img
+		<!-- <img
 			v-for="(uri, idx) in symbols"
 			class="ms ms-shadow"
 			:key="idx"
 			:src="uri"
-		/>
+		/> -->
 	</div>
 </template>
 
