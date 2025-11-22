@@ -108,15 +108,39 @@
 					<polyline points="22,6 12,13 2,6"></polyline>
 				</svg>
 			</a>
-			<a
-				href="https://github.com/Senryoku"
-				target="_blank"
-				rel="noopener noreferrer"
-				class="header-icon-link"
-				title="GitHub"
-			>
-				<img src="../assets/img/GitHub-Mark-Light-32px.png" alt="GitHub" />
-			</a>
+			
+			<!-- Contributors Section -->
+			<div class="contributors-section">
+				<span class="contributors-label">Contributors:</span>
+				<div class="contributors-avatars">
+					<a
+						href="https://github.com/shadowner"
+						target="_blank"
+						rel="noopener noreferrer"
+						class="contributor-link"
+						title="shadowner"
+					>
+						<img 
+							src="https://github.com/shadowner.png" 
+							alt="shadowner" 
+							class="contributor-avatar contributor-avatar--primary"
+						/>
+					</a>
+					<a
+						href="https://github.com/Senryoku"
+						target="_blank"
+						rel="noopener noreferrer"
+						class="contributor-link"
+						title="Senryoku"
+					>
+						<img 
+							src="https://github.com/Senryoku.png" 
+							alt="Senryoku" 
+							class="contributor-avatar contributor-avatar--secondary"
+						/>
+					</a>
+				</div>
+			</div>
 		</div>
 	</header>
 </template>
@@ -288,6 +312,126 @@ defineEmits<{
 	flex-shrink: 0;
 }
 
+/* Contributors Section */
+.contributors-section {
+	display: flex;
+	align-items: center;
+	gap: var(--space-2);
+}
+
+.contributors-label {
+	color: rgba(255, 255, 255, 0.8);
+	font-size: var(--text-sm);
+}
+
+.contributors-avatars {
+	display: flex;
+	gap: var(--space-1);
+	position: relative;
+}
+
+.contributor-link {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	border-radius: 50%;
+	transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+	position: relative;
+	overflow: hidden;
+}
+
+.contributor-avatar {
+	width: 32px;
+	height: 32px;
+	border-radius: 50%;
+	border: 2px solid rgba(255, 255, 255, 0.3);
+	transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+	position: relative;
+	z-index: 1;
+}
+
+/* Primary contributor animations */
+.contributor-avatar--primary {
+	animation: float 3s ease-in-out infinite;
+}
+
+.contributor-link:hover .contributor-avatar--primary {
+	transform: scale(1.1) rotate(360deg);
+	border-color: #ace4f1;
+	box-shadow: 0 0 20px rgba(172, 228, 241, 0.6);
+}
+
+/* Secondary contributor animations */
+.contributor-avatar--secondary {
+	animation: float 3s ease-in-out infinite reverse;
+	animation-delay: -1.5s;
+}
+
+.contributor-link:hover .contributor-avatar--secondary {
+	transform: scale(1.1) rotate(-360deg);
+	border-color: #d0f6ff;
+	box-shadow: 0 0 20px rgba(208, 246, 255, 0.6);
+}
+
+/* Glow effect on hover */
+.contributor-link::before {
+	content: '';
+	position: absolute;
+	inset: -4px;
+	border-radius: 50%;
+	background: linear-gradient(45deg, #ace4f1, #d0f6ff, #ace4f1);
+	opacity: 0;
+	transition: opacity 0.3s ease;
+	z-index: 0;
+}
+
+.contributor-link:hover::before {
+	opacity: 0.3;
+	animation: rotate 2s linear infinite;
+}
+
+/* Floating animation */
+@keyframes float {
+	0%, 100% {
+		transform: translateY(0px);
+	}
+	50% {
+		transform: translateY(-4px);
+	}
+}
+
+/* Rotating gradient animation */
+@keyframes rotate {
+	from {
+		transform: rotate(0deg);
+	}
+	to {
+		transform: rotate(360deg);
+	}
+}
+
+/* Pulse animation for avatars */
+.contributor-avatar::after {
+	content: '';
+	position: absolute;
+	inset: -2px;
+	border-radius: 50%;
+	background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+	opacity: 0;
+	animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+	0%, 100% {
+		opacity: 0;
+		transform: scale(1);
+	}
+	50% {
+		opacity: 0.5;
+		transform: scale(1.1);
+	}
+}
+
 /* Responsive adjustments */
 @media (max-width: 1200px) {
 	.app-header {
@@ -317,6 +461,26 @@ defineEmits<{
 @media (max-width: 900px) {
 	.header-contact-label {
 		display: none;
+	}
+	
+	.contributors-label {
+		display: none;
+	}
+	
+	.contributor-avatar {
+		width: 28px;
+		height: 28px;
+	}
+}
+
+@media (max-width: 600px) {
+	.contributors-section {
+		gap: var(--space-1);
+	}
+	
+	.contributor-avatar {
+		width: 24px;
+		height: 24px;
 	}
 }
 </style>
