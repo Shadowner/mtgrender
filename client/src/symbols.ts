@@ -1,5 +1,5 @@
 export const mana_symbols = {};
-import mana_symbols_list from "../public/assets/data/symbology.json";
+import mana_symbols_list from "./assets/data/symbology.json";
 
 function getImage(uri: string) {
 	return new URL(`/assets/img/symbols/${uri}.svg`, import.meta.url).href;

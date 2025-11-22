@@ -6,7 +6,6 @@
 		width="100%"
 		height="100%"
 		preserveAspectRatio="none"
-		v-if="isArchive"
 	>
 		<filter
 			id="noise"
@@ -311,9 +310,7 @@
 	</svg>
 </template>
 
-<script lang="ts">
-import { defineComponent } from "vue";
-
+<script setup lang="ts">
 /**
  * ArchiveFrame Component
  *
@@ -327,18 +324,6 @@ import { defineComponent } from "vue";
  * The frame overlay creates the distinctive Archive aesthetic with
  * procedural noise textures and asymmetric ornamentation.
  */
-export default defineComponent({
-	name: "ArchiveFrame",
-	props: {
-		/**
-		 * Whether this card uses the Archive frame
-		 */
-		isArchive: {
-			type: Boolean,
-			default: false,
-		},
-	},
-});
 </script>
 
 <style scoped>

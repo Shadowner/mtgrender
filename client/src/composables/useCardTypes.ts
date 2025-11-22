@@ -13,7 +13,6 @@ export interface CardTypesResult {
 	has_legendary_crown: ComputedRef<boolean>;
 	is_adventure: ComputedRef<boolean>;
 	is_planeswalker: ComputedRef<boolean>;
-	is_large_planeswalker: ComputedRef<boolean>;
 	is_saga: ComputedRef<boolean>;
 	is_class: ComputedRef<boolean>;
 	is_vehicle: ComputedRef<boolean>;
@@ -25,8 +24,7 @@ export interface CardTypesResult {
 
 export function useCardTypes(
 	card: ComputedRef<any>,
-	card_face: ComputedRef<any>,
-	planeswalker_abilities: ComputedRef<any[] | null>
+	card_face: ComputedRef<any>
 ): CardTypesResult {
 	const is_land = computed(() => {
 		return card_face.value?.type_line?.startsWith('Land') ||
@@ -57,10 +55,6 @@ export function useCardTypes(
 			!is_planeswalker.value &&
 			!card.value?.frame_effects?.includes('compasslanddfc')
 		);
-	});
-
-	const is_large_planeswalker = computed(() => {
-		return is_planeswalker.value && (planeswalker_abilities.value?.length ?? 0) > 3;
 	});
 
 	const is_saga = computed(() => {
@@ -107,7 +101,6 @@ export function useCardTypes(
 		has_legendary_crown,
 		is_adventure,
 		is_planeswalker,
-		is_large_planeswalker,
 		is_saga,
 		is_class,
 		is_vehicle,

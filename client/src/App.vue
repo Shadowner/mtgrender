@@ -18,8 +18,7 @@
 
 
 			<div class="card-display">
-				2
-				<MTGNewCard
+				<MTGCard
 					:card="finalCard"
 					:scale="displayScale"
 					:renderMargin="renderOptions.margin"
@@ -213,9 +212,8 @@
 
 <script setup lang="ts">
 import { ref, watch, onMounted, onUnmounted } from 'vue';
-import SetsWithIcons from '../public/assets/data/sets_with_icons.json';
+import SetsWithIcons from "./assets/data/sets_with_icons.json";
 import MTGCard from './components/MTGCard.vue';
-import MTGNewCard from './components/MTGNewCard.vue';
 import CardFaceEditor from './components/CardFaceEditor.vue';
 import CardStore from './components/CardStore.vue';
 import RenderSettings from './components/RenderSettings.vue';

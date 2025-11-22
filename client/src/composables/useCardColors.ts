@@ -1,4 +1,5 @@
-import { computed, type ComputedRef } from 'vue';
+import { computed, type ComputedRef, type Ref } from 'vue';
+import type { MTGCard, CardFace, FrameColors as FrameColorsType } from '../types/card';
 
 const FrameColors = {
 	W: '#f9f4f0',
@@ -44,14 +45,15 @@ export interface CardColorsResult {
 	japanese_name_color: ComputedRef<string>;
 	japanese_type_line_border: ComputedRef<string>;
 	japanese_oracle_border: ComputedRef<string>;
+	compute_colors: (face: MTGCard | CardFace) => string;
 }
 
 export function useCardColors(
-	card: ComputedRef<any>,
-	card_face: ComputedRef<any>,
+	card: Ref<MTGCard>,
+	card_face: Ref<CardFace>,
 	is_land: ComputedRef<boolean>
 ): CardColorsResult {
-	const compute_colors = (face: any): string => {
+	const compute_colors = (face: MTGCard | CardFace): string => {
 		if (
 			face?.colors === undefined &&
 			face?.color_identity === undefined &&
@@ -198,5 +200,47 @@ export function useCardColors(
 		japanese_name_color,
 		japanese_type_line_border,
 		japanese_oracle_border,
+		compute_colors,
 	};
+}
+
+// Export standalone utility for use outside the composable
+export function computeCardColors(face: MTGCard | CardFace, card?: MTGCard): string {
+	const contains = (str: string | undefined, search: string | string[]): boolean => {
+		if (!str || !search) return false;
+		if (Array.isArray(search))
+			return search.some((s) => str.toLowerCase().includes(s.toLowerCase()));
+		return str.toLowerCase().includes(search.toLowerCase());
+	};
+
+	if (
+		face?.colors === undefined &&
+		face?.color_identity === undefined &&
+		face?.mana_cost === undefined
+	)
+		return 'Colourless';
+
+	let colors =
+		face?.colors && face?.colors.length > 0
+			? face?.colors
+			: face?.color_identity
+			? face?.color_identity
+			: [...(face.mana_cost || '')].filter((c: string) => 'WUBRG'.includes(c));
+
+	if (colors.length === 0 && card?.color_identity?.length > 0)
+		colors = card.color_identity;
+
+	const sorted_colors = [...new Set(colors)]
+		.sort((l: string, r: string) => {
+			return 'WUBRG'.indexOf(l) - 'WUBRG'.indexOf(r);
+		})
+		.join('');
+
+	return contains(face.type_line, ['Artifact', 'Artefact', 'Artéfact'])
+		? 'Artifact'
+		: sorted_colors.length === 0
+		? 'Colourless'
+		: sorted_colors.length > 2
+		? 'Gold'
+		: sorted_colors;
 }

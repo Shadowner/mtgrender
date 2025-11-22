@@ -4,6 +4,7 @@ export interface CardTypeSpecificsResult {
 	planeswalker_abilities: ComputedRef<
 		{ html: string; cost: number | null }[] | null
 	>;
+	is_large_planeswalker: ComputedRef<boolean>;
 	saga_reminder: ComputedRef<string>;
 	saga_steps: ComputedRef<{ steps: string[]; html: string }[]>;
 	class_reminder: ComputedRef<string>;
@@ -149,8 +150,13 @@ export function useCardTypeSpecifics(
 		return levels;
 	});
 
+	const is_large_planeswalker = computed(() => {
+		return is_planeswalker.value && (planeswalker_abilities.value?.length ?? 0) > 3;
+	});
+
 	return {
 		planeswalker_abilities,
+		is_large_planeswalker,
 		saga_reminder,
 		saga_steps,
 		class_reminder,
