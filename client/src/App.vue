@@ -15,13 +15,15 @@
 		</AppHeader>
 
 		<div class="content">
+
+
 			<div class="card-display">
-				<MTGCard
+				2
+				<MTGNewCard
 					:card="finalCard"
 					:scale="displayScale"
 					:renderMargin="renderOptions.margin"
 					@edit="editCard"
-					ref="cardComponentRef"
 				/>
 			</div>
 
@@ -204,6 +206,8 @@
 
 			<!-- <CardStore :currentCard="card" @load="loadCard" @renderAll="renderAll" ref="storeRef" /> -->
 		</div>
+
+
 	</div>
 </template>
 
@@ -211,6 +215,7 @@
 import { ref, watch, onMounted, onUnmounted } from 'vue';
 import SetsWithIcons from '../public/assets/data/sets_with_icons.json';
 import MTGCard from './components/MTGCard.vue';
+import MTGNewCard from './components/MTGNewCard.vue';
 import CardFaceEditor from './components/CardFaceEditor.vue';
 import CardStore from './components/CardStore.vue';
 import RenderSettings from './components/RenderSettings.vue';
