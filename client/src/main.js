@@ -1,6 +1,7 @@
 import { createApp } from "vue";
 import App from "./App.vue";
 import ToastContainer from "./components/ToastContainer.vue";
+import "./design/tokens.css";
 import "./index.css";
 
 import Spinner from "./components/Spinner.vue";

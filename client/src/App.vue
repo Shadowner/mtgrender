@@ -15,113 +15,155 @@
 		</AppHeader>
 
 		<div class="content">
-
-
 			<div class="card-display">
+				<!-- Debug Controls - Separated from card -->
+
+
 				<MTGCard
 					:card="finalCard"
 					:scale="displayScale"
 					:renderMargin="renderOptions.margin"
+					:displayDebug="displayDebug"
+					:debugOpacity="debugOpacity"
 					@edit="editCard"
 				/>
+
+								<div class="debug-controls" v-if="isDevelopment">
+					<h4>Debug Tools</h4>
+					<div class="debug-control-group">
+						<label>
+							<input type="checkbox" v-model="displayDebug" />
+							Show overlay
+						</label>
+					</div>
+					<div class="debug-control-group">
+						<label for="debug-opacity">Opacity: {{ (debugOpacity * 100).toFixed(0) }}%</label>
+						<input
+							id="debug-opacity"
+							type="range"
+							min="0"
+							max="1"
+							step="0.05"
+							v-model="debugOpacity"
+						/>
+					</div>
+				</div>
 			</div>
 
 			<div style="flex-grow: 1">
 				<CardTabs :tabs="tabs" v-model:currentTab="currentTab">
 					<div v-show="currentTab === 0" class="inner-tab card-info">
-						<div style="display: flex; justify-content: space-between">
-							<div>
-								<div>
-									<label for="card-layout">Layout</label>
-									<input
+						<div class="card-properties-grid">
+							<div class="card-properties-section">
+								<FormGroup
+									label="Layout"
+									hint="Type de mise en page de la carte"
+								>
+									<Combobox
 										id="card-layout"
 										v-model="card.layout"
-										type="text"
-										list="card-layouts"
+										:options="cardLayouts"
+										placeholder="Choisir un layout..."
 										@change="layoutChange"
 									/>
-									<datalist id="card-layouts">
-										<option
-											v-for="layout in cardLayouts"
-											:key="layout"
-											:value="layout"
-										></option>
-									</datalist>
-								</div>
-								<div>
-									<label for="card-set">Set</label>
-									<input
-										id="card-set"
-										v-model="card.set"
-										list="card-sets"
-										type="text"
-										style="width: 4em"
-									/>
-									<datalist id="card-sets">
-										<option
-											v-for="s in setsWithIcons"
-											:key="s"
-											:value="s"
-										></option>
-									</datalist>
-									<a @click="card.set = undefined">↺</a>
-									<input
+								</FormGroup>
+
+								<FormGroup label="Set" hint="Code de l'extension">
+									<div style="display: flex; gap: var(--space-2); align-items: flex-start">
+										<div style="flex: 0 0 120px">
+											<Combobox
+												id="card-set"
+												v-model="card.set"
+												:options="setsWithIcons"
+												placeholder="ex: MH3"
+												size="base"
+											/>
+										</div>
+										<Button
+											variant="ghost"
+											size="sm"
+											:icon-only="true"
+											@click="card.set = undefined"
+											title="Réinitialiser"
+										>
+											↺
+										</Button>
+									</div>
+								</FormGroup>
+
+								<FormGroup
+									label="Set Icon (Custom)"
+									hint="URL personnalisée pour l'icône d'extension"
+								>
+									<Input
 										id="card-set-icon"
 										v-model="card.set_icon"
-										type="text"
-										placeholder="Custom Icon URL"
-										style="width: 13em"
+										placeholder="URL de l'icône..."
+										:show-clear="true"
 									/>
-									<a @click="card.set_icon = undefined">↺</a>
-								</div>
-								<div>
-									<label for="card-rarity">Rarity</label>
-									<select id="card-rarity" v-model="card.rarity">
-										<option
-											v-for="r in cardRarities"
-											:key="r"
-											:value="r"
+								</FormGroup>
+
+								<FormGroup label="Rarity" hint="Rareté de la carte">
+									<div style="display: flex; gap: var(--space-2); align-items: flex-start">
+										<Combobox
+											id="card-rarity"
+											v-model="card.rarity"
+											:options="cardRarities"
+											placeholder="Choisir une rareté..."
+											:allow-custom-value="false"
+										/>
+										<Button
+											variant="ghost"
+											size="sm"
+											:icon-only="true"
+											@click="card.rarity = undefined"
+											title="Réinitialiser"
 										>
-											{{ r }}
-										</option>
-									</select>
-									<a @click="card.rarity = undefined">↺</a>
-								</div>
-							</div>
-							<div>
-								<div style="display: flex; align-items: center">
-									<label for="card-frame-effects">Frame Effects</label>
-									<div id="card-frame-effects" style="display: inline-block">
-										<form @submit.prevent="handleAddFrameEffect">
-											<input
-												type="text"
-												id="add-frame-effect"
-												name="add-frame-effect"
-												list="frame-effects"
-											/>
-											<datalist id="frame-effects">
-												<option
-													v-for="e in frameEffects"
-													:key="e"
-													:value="e"
-												></option>
-											</datalist>
-											<button type="submit">Add</button>
-										</form>
-										<ul style="margin: 0 1em; padding: 0">
-											<li
-												v-for="(r, idx) in card.frame_effects"
-												:key="r"
-												:value="r"
-											>
-												<input type="text" v-model="card.frame_effects![idx]" />
-												<span @click="removeFrameEffect(idx)" class="clickable">
-													🗑
-												</span>
-											</li>
-										</ul>
+											↺
+										</Button>
 									</div>
-								</div>
+								</FormGroup>
+							</div>
+							<div class="card-properties-section">
+								<FormGroup
+									label="Frame Effects"
+									hint="Effets spéciaux sur la bordure (showcase, extended, etc.)"
+								>
+									<form @submit.prevent="handleAddFrameEffect" style="display: flex; gap: var(--space-2)">
+										<Combobox
+											id="add-frame-effect"
+											v-model="newFrameEffect"
+											:options="frameEffects"
+											placeholder="Ajouter un effet..."
+											size="base"
+											style="flex: 1"
+										/>
+										<Button type="submit" variant="primary" size="base">
+											Ajouter
+										</Button>
+									</form>
+									<ul v-if="card.frame_effects && card.frame_effects.length > 0" class="frame-effects-list">
+										<li
+											v-for="(effect, idx) in card.frame_effects"
+											:key="idx"
+											class="frame-effect-item"
+										>
+											<Input
+												v-model="card.frame_effects![idx]"
+												size="sm"
+											/>
+											<Button
+												variant="ghost"
+												size="sm"
+												:icon-only="true"
+												@click="removeFrameEffect(idx)"
+												title="Supprimer"
+											>
+												🗑
+											</Button>
+										</li>
+									</ul>
+								</FormGroup>
 							</div>
 						</div>
 
@@ -138,7 +180,7 @@
 							<div class="dual-face-editor">
 								<div>
 									<h2>{{ card.layout === 'adventure' ? 'Main' : 'Front' }}</h2>
-									<CardFaceEditor
+									<CardFaceEditorV2
 										v-model="card.card_faces[0]"
 										@outline="outlineElement"
 										:illustrationEditor="card.layout !== 'adventure'"
@@ -148,7 +190,7 @@
 									<h2>
 										{{ card.layout === 'adventure' ? 'Adventure' : 'Back' }}
 									</h2>
-									<CardFaceEditor
+									<CardFaceEditorV2
 										v-model="card.card_faces[1]"
 										@outline="outlineElement"
 										:illustrationEditor="card.layout !== 'adventure'"
@@ -157,7 +199,7 @@
 							</div>
 						</template>
 						<template v-else>
-							<CardFaceEditor v-model="card" @outline="outlineElement" />
+							<CardFaceEditorV2 v-model="card" @outline="outlineElement" />
 						</template>
 					</div>
 
@@ -214,13 +256,17 @@
 import { ref, watch, onMounted, onUnmounted } from 'vue';
 import SetsWithIcons from "./assets/data/sets_with_icons.json";
 import MTGCard from './components/MTGCard.vue';
-import CardFaceEditor from './components/CardFaceEditor.vue';
+import CardFaceEditorV2 from './components/CardFaceEditor.vue';
 import CardStore from './components/CardStore.vue';
 import RenderSettings from './components/RenderSettings.vue';
 import IllustrationEditor from './components/IllustrationEditor.vue';
 import AppHeader from './components/AppHeader.vue';
 import CardSearchInput from './components/CardSearchInput.vue';
 import CardTabs from './components/CardTabs.vue';
+import Combobox from './components/ui/Combobox.vue';
+import FormGroup from './components/ui/FormGroup.vue';
+import Input from './components/ui/Input.vue';
+import Button from './components/ui/Button.vue';
 
 import { useCardData } from './composables/useCardData';
 import { useCardAutocomplete } from './composables/useCardAutocomplete';
@@ -249,6 +295,12 @@ const setsWithIcons = SetsWithIcons;
 // State
 const displayScale = ref(2.0);
 const currentTab = ref(0);
+const newFrameEffect = ref('');
+
+// Debug state
+const displayDebug = ref(false);
+const debugOpacity = ref(0.5);
+const isDevelopment = import.meta.env.MODE === 'development';
 
 // Render options
 const { getStoredValue: getRenderOptions } = useLocalStorage<RenderOptions>(
@@ -341,12 +393,10 @@ const handleLoadCard = async (cardName: string) => {
 	}
 };
 
-const handleAddFrameEffect = (event: Event) => {
-	const form = event.target as HTMLFormElement;
-	const input = form.querySelector('#add-frame-effect') as HTMLInputElement;
-	if (input.value) {
-		addFrameEffect(input.value);
-		input.value = '';
+const handleAddFrameEffect = () => {
+	if (newFrameEffect.value) {
+		addFrameEffect(newFrameEffect.value);
+		newFrameEffect.value = '';
 	}
 };
 
@@ -416,7 +466,4 @@ onMounted(() => {
 	}
 });
 
-onUnmounted(() => {
-	// Cleanup if needed
-});
 </script>

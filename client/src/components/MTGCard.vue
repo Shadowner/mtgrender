@@ -116,7 +116,7 @@
 		/>
 		<div v-if="is_dualfaced" class="flip-icon" @click="flip">⭯</div>
 		<div
-			v-if="isDevelopment && displayDebug && debugImageUri"
+			v-if="isDevelopment && displayDebugValue && debugImageUri"
 			class="debug-overlay"
 			@mousemove="updateDebugOverlay"
 			@mouseleave="updateDebugOverlay"
@@ -125,10 +125,7 @@
 				<img :src="debugImageUri" />
 			</div>
 		</div>
-		<div class="debug-controls" v-if="isDevelopment">
-			<input type="number" step="0.1" v-model="debugOpacity" />
-			<input type="checkbox" v-model="displayDebug" />
-		</div>
+
 		<svg class="svg" height="0" width="0">
 			<clipPath id="full-art-clip-path" clipPathUnits="objectBoundingBox">
 				<path
@@ -176,13 +173,14 @@ import { useCardTypeSpecifics } from '../composables/useCardTypeSpecifics';
 import { useCardAssets } from '../composables/useCardAssets';
 import { useIllustration } from '../composables/useIllustration';
 import { useTextFitting } from '../composables/useTextFitting';
-import { useDebugOverlay } from '../composables/useDebugOverlay';
 
 // Props
 const props = defineProps<{
 	card: any;
 	scale: number;
 	renderMargin: number;
+	displayDebug?: boolean;
+	debugOpacity?: number;
 }>();
 
 // Emits
@@ -329,13 +327,26 @@ const { fit, fit_name, fit_type_line, fit_oracle_text } = useTextFitting(
 );
 
 // Debug overlay
-const {
-	isDevelopment,
-	displayDebug,
-	debugOpacity,
-	debugImageUri,
-	updateDebugOverlay,
-} = useDebugOverlay(card_computed, card_face, scale_computed);
+const isDevelopment = import.meta.env.MODE === 'development';
+const displayDebugValue = computed(() => props.displayDebug ?? false);
+const debugOpacityValue = computed(() => props.debugOpacity ?? 0.5);
+
+const debugImageUri = computed(() => {
+	return card_computed.value?.image_uris?.png || card_face.value?.image_uris?.png;
+});
+
+const updateDebugOverlay = (event: MouseEvent) => {
+	const target = event.target as HTMLElement;
+	const firstChild = target.firstElementChild as HTMLElement;
+	const parent = target.parentElement;
+
+	if (event.type === 'mousemove' && parent && firstChild) {
+		const rect = parent.getBoundingClientRect();
+		firstChild.style.width = `${(event.clientX - rect.x) / scale_computed.value}px`;
+	} else if (firstChild) {
+		firstChild.style.width = '';
+	}
+};
 
 // Computed styles for CSS (fixes v-bind() in calc() errors)
 const illustrationBgSize = computed(() => `${illustration_scale.value * 100}%`);
@@ -411,7 +422,7 @@ const edit_property = (prop: string) => {
 		emit(
 			'edit',
 			props.card.card_faces && !is_adventure.value
-				? ['card_faces', currentFace.value, prop]
+				? ['card_faces', String(currentFace.value), prop]
 				: prop,
 			r
 		);
@@ -820,6 +831,7 @@ defineExpose({
 	--right-darker: v-bind(archive_frame_colors.right.darker);
 }
 
+/* Debug Overlay */
 .debug-overlay {
 	position: absolute;
 	top: 0;
@@ -827,7 +839,14 @@ defineExpose({
 	z-index: 4;
 	width: var(--card-width);
 	height: 100%;
-	opacity: v-bind(debugOpacity);
+	opacity: v-bind(debugOpacityValue);
+	pointer-events: none;
+}
+
+.debug-overlay img {
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
 }
 
 .background-color {
