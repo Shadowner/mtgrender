@@ -2,35 +2,7 @@
 	<div
 		ref="cardEl"
 		class="mtg-card"
-		:class="{
-			mdfc: is_mdfc,
-			transform: is_transform,
-			back: currentFace === 1,
-			legendary: is_legendary,
-			'has-legendary-crown': has_legendary_crown,
-			planeswalker: is_planeswalker,
-			'planeswalker-large': is_large_planeswalker,
-			saga: is_saga,
-			class: is_class,
-			adventure: is_adventure,
-			'extended-art':
-				(is_adventure ? card : card_face).art_variant === 'extended',
-			'full-art': [
-				'full',
-				'full-footer',
-				'archive',
-				'japanese-archive',
-			].includes((is_adventure ? card : card_face).art_variant),
-			'full-footer': ['full-footer', 'japanese-archive'].includes(
-				(is_adventure ? card : card_face).art_variant
-			),
-			archive:
-				(is_adventure ? card : card_face).art_variant === 'archive',
-			'japanese-archive':
-				(is_adventure ? card : card_face).art_variant ===
-				'japanese-archive',
-			compasslanddfc: card.frame_effects?.includes('compasslanddfc'),
-		}"
+		:class="cardClasses"
 	>
 		<div class="inner-background"></div>
 		<div
@@ -48,7 +20,7 @@
 		></div>
 		<div class="planeswalker-oracle-bg" v-if="is_planeswalker"></div>
 		<div class="inner-frame">
-			<ArchiveFrame v-if="(is_adventure ? card : card_face).art_variant === 'archive'" />
+			<ArchiveFrame v-if="artVariant === 'archive'" />
 		</div>
 		<LegendaryCrown :visible="has_legendary_crown" />
 		<CardTopLine
@@ -101,47 +73,12 @@
 			/>
 		</template>
 		<template v-else-if="is_levelup">
-			<div class="oracle normal-oracle levelup-oracle" ref="oracle_el">
-				<div
-					class="oracle-levelup-inner"
-					v-for="(level, idx) in levels"
-					:key="idx"
-					:style="'background-color: ' + level.color + ';'"
-					@dblclick="edit_property('oracle_text')"
-					@mousedown.prevent=""
-				>
-					<div class="level-box" v-if="level.level">
-						<LevelBoxBackground :box-color="level.box_color" />
-						<div>{{ level.level_text }}</div>
-						<div>{{ level.level }}</div>
-					</div>
-					<div
-						class="oracle-text"
-						:class="{
-							'has-level': level.level,
-							'has-pt': level.power,
-						}"
-					>
-						<div
-							class="oracle-inner"
-							v-for="line in level.oracle_lines"
-							v-html="line"
-						></div>
-					</div>
-					<div v-if="level.power" class="pt-box">
-						{{ level.power }}/{{ level.toughness }}
-					</div>
-				</div>
-				<div
-					class="oracle-flavor"
-					v-if="card_face.flavor_text"
-					@dblclick="edit_property('flavor_text')"
-					@mousedown.prevent=""
-				>
-					<hr />
-					{{ card_face.flavor_text }}
-				</div>
-			</div>
+			<LevelupLayout
+				ref="oracle_el"
+				:levels="levels"
+				:cardFace="card_face"
+				@edit-property="edit_property"
+			/>
 		</template>
 		<template v-else>
 			<NormalOracleLayout
@@ -179,24 +116,18 @@
 		/>
 		<div v-if="is_dualfaced" class="flip-icon" @click="flip">⭯</div>
 		<div
-			v-if="
-				debug &&
-				display_debug &&
-				(card?.image_uris?.png || card_face?.image_uris?.png)
-			"
+			v-if="isDevelopment && displayDebug && debugImageUri"
 			class="debug-overlay"
-			@mousemove="update_debug_overlay"
-			@mouseleave="update_debug_overlay"
+			@mousemove="updateDebugOverlay"
+			@mouseleave="updateDebugOverlay"
 		>
 			<div>
-				<img
-					:src="card?.image_uris?.png || card_face?.image_uris?.png"
-				/>
+				<img :src="debugImageUri" />
 			</div>
 		</div>
-		<div class="debug-controls" v-if="debug">
-			<input type="number" step="0.1" v-model="debug_opacity" />
-			<input type="checkbox" v-model="display_debug" />
+		<div class="debug-controls" v-if="isDevelopment">
+			<input type="number" step="0.1" v-model="debugOpacity" />
+			<input type="checkbox" v-model="displayDebug" />
 		</div>
 		<svg class="svg" height="0" width="0">
 			<clipPath id="full-art-clip-path" clipPathUnits="objectBoundingBox">
@@ -221,7 +152,6 @@ import { ref, computed, watch, onUpdated } from 'vue';
 
 // Components imports
 import ArchiveFrame from './card/ArchiveFrame.vue';
-import LevelBoxBackground from './card/LevelBoxBackground.vue';
 import LegendaryCrown from './card/LegendaryCrown.vue';
 import PTBox from './card/PTBox.vue';
 import LoyaltyBox from './card/LoyaltyBox.vue';
@@ -235,6 +165,7 @@ import AdventureLayout from './card/AdventureLayout.vue';
 import SagaLayout from './card/SagaLayout.vue';
 import ClassLayout from './card/ClassLayout.vue';
 import PlaneswalkerLayout from './card/PlaneswalkerLayout.vue';
+import LevelupLayout from './card/LevelupLayout.vue';
 
 // Composables imports
 import { useOracleParser } from '../composables/useOracleParser';
@@ -245,6 +176,7 @@ import { useCardTypeSpecifics } from '../composables/useCardTypeSpecifics';
 import { useCardAssets } from '../composables/useCardAssets';
 import { useIllustration } from '../composables/useIllustration';
 import { useTextFitting } from '../composables/useTextFitting';
+import { useDebugOverlay } from '../composables/useDebugOverlay';
 
 // Props
 const props = defineProps<{
@@ -264,9 +196,6 @@ const topLineRef = ref<any>(null);
 const midLineRef = ref<any>(null);
 const oracle_el = ref<any>(null);
 const currentFace = ref(0);
-const debug = ref(import.meta.env.MODE === 'development');
-const display_debug = ref(false);
-const debug_opacity = ref(0);
 
 // Computed refs for composables
 const card_computed = computed(() => props.card);
@@ -399,6 +328,78 @@ const { fit, fit_name, fit_type_line, fit_oracle_text } = useTextFitting(
 	oracle_el
 );
 
+// Debug overlay
+const {
+	isDevelopment,
+	displayDebug,
+	debugOpacity,
+	debugImageUri,
+	updateDebugOverlay,
+} = useDebugOverlay(card_computed, card_face, scale_computed);
+
+// Computed styles for CSS (fixes v-bind() in calc() errors)
+const illustrationBgSize = computed(() => `${illustration_scale.value * 100}%`);
+const illustrationBgPosX = computed(() => illustration_position.value?.x || '50%');
+const illustrationBgPosY = computed(() => illustration_position.value?.y || '50%');
+
+// Extended art computed styles
+const extendedArtMargin = computed(() => `${2 * props.renderMargin * props.scale}mm`);
+const extendedArtOffset = computed(() => `${1 * props.renderMargin * props.scale}mm`);
+const extendedArtNegativeOffset = computed(() => `${-1 * props.renderMargin * props.scale}mm`);
+
+const extendedArtWidth = computed(() => `calc(100% + ${extendedArtMargin.value})`);
+const extendedArtBgSize = computed(() =>
+	`calc(${illustration_scale.value} * (100% - ${extendedArtMargin.value}))`
+);
+const extendedArtBgPosX = computed(() =>
+	`calc(${illustrationBgPosX.value} + ${extendedArtOffset.value})`
+);
+const extendedArtBgPosY = computed(() =>
+	`calc(${illustrationBgPosY.value})`
+);
+
+// Full art computed styles (same width/height/offset as extended art)
+const fullArtBgPosX = computed(() =>
+	`calc(${illustrationBgPosX.value} + ${extendedArtOffset.value})`
+);
+const fullArtBgPosY = computed(() =>
+	`calc(${illustrationBgPosY.value} + ${extendedArtOffset.value})`
+);
+
+// Frame colors (fixes CSS parser issues with dot notation in v-bind)
+const frameColorLeft = computed(() => frame_colors.value.left);
+const frameColorRight = computed(() => frame_colors.value.right);
+
+// Computed for class bindings
+const activeCardForArt = computed(() =>
+	is_adventure.value ? props.card : card_face.value
+);
+
+const artVariant = computed(() => activeCardForArt.value?.art_variant);
+
+const cardClasses = computed(() => ({
+	mdfc: is_mdfc.value,
+	transform: is_transform.value,
+	back: currentFace.value === 1,
+	legendary: is_legendary.value,
+	'has-legendary-crown': has_legendary_crown.value,
+	planeswalker: is_planeswalker.value,
+	'planeswalker-large': is_large_planeswalker.value,
+	saga: is_saga.value,
+	class: is_class.value,
+	adventure: is_adventure.value,
+	'extended-art': artVariant.value === 'extended',
+	'full-art': ['full', 'full-footer', 'archive', 'japanese-archive'].includes(
+		artVariant.value || ''
+	),
+	'full-footer': ['full-footer', 'japanese-archive'].includes(
+		artVariant.value || ''
+	),
+	archive: artVariant.value === 'archive',
+	'japanese-archive': artVariant.value === 'japanese-archive',
+	compasslanddfc: props.card.frame_effects?.includes('compasslanddfc'),
+}));
+
 // Methods
 const set_face = (idx: number) => {
 	currentFace.value = idx;
@@ -423,43 +424,26 @@ const flip = () => {
 	fit_type_line();
 };
 
-const update_debug_overlay = (event: MouseEvent) => {
-	if (event.type === 'mousemove') {
-		(event.target as HTMLElement).firstElementChild!.style.width =
-			(event.clientX -
-				(event.target as HTMLElement).parentNode!.getBoundingClientRect().x) /
-				props.scale +
-			'px';
-	} else {
-		(event.target as HTMLElement).firstElementChild!.style.width = '';
-	}
-};
-
 // Lifecycle
 onUpdated(() => {
 	fit();
 });
 
-// Watchers
+// Watchers - consolidated for better performance
 watch(
-	() => props.card?.oracle_text,
-	() => {
-		fit_oracle_text();
-	}
-);
-
-watch(
-	() => props.card?.type_line,
-	() => {
-		fit_type_line();
-	}
-);
-
-watch(
-	() => props.card?.card_faces,
-	() => {
-		fit();
-	}
+	() => props.card,
+	(newCard, oldCard) => {
+		if (newCard?.oracle_text !== oldCard?.oracle_text) {
+			fit_oracle_text();
+		}
+		if (newCard?.type_line !== oldCard?.type_line) {
+			fit_type_line();
+		}
+		if (newCard?.card_faces !== oldCard?.card_faces) {
+			fit();
+		}
+	},
+	{ deep: false }
 );
 
 // Define expose for external usage if needed
@@ -470,102 +454,141 @@ defineExpose({
 
 <style type="text/css">
 @import url("../card.css");
+
+/* CSS Custom Properties for maintainability */
+.mtg-card {
+	/* Card dimensions */
+	--card-width: 63.5mm;
+	--card-inner-width: 58.5mm;
+	--card-inner-height: 78mm;
+
+	/* Illustration */
+	--illustration-top: 9.55mm;
+	--illustration-left: 4.4mm;
+	--illustration-width: 54.7mm;
+	--illustration-height: 39.9mm;
+
+	/* Spacing */
+	--spacing-xs: 0.4mm;
+	--spacing-sm: 0.6mm;
+	--spacing-md: 1mm;
+	--spacing-lg: 2mm;
+	--spacing-xl: 3mm;
+
+	/* Border radius */
+	--radius-sm: 0.75mm;
+	--radius-md: 1mm;
+	--radius-lg: 1.5mm;
+	--radius-xl: 4mm;
+
+	/* Positions */
+	--top-line-top: 4mm;
+	--mid-line-top: 49.9mm;
+	--pt-box-bottom: 3.8mm;
+	--pt-box-right: 3mm;
+
+	/* Common sizes */
+	--border-thin: 0.22mm;
+	--border-thick: 0.6mm;
+	--mana-symbol-width: 4.2mm;
+
+	/* Colors */
+	--color-white: #fff;
+	--color-white-alpha: #ffffffa0;
+	--color-shadow: #0005;
+	--color-bg-primary: #ecdfbf;
+}
+
 .original-name-left {
-	stop-color: v-bind(frame_colors.left);
+	stop-color: v-bind(frameColorLeft);
 }
 
 .original-name-right {
-	stop-color: v-bind(frame_colors.right);
+	stop-color: v-bind(frameColorRight);
 }
 
 .illustration {
 	position: absolute;
-	top: 9.55mm;
-	left: 4.4mm;
-	width: 54.7mm;
-	height: 39.9mm;
+	top: var(--illustration-top);
+	left: var(--illustration-left);
+	width: var(--illustration-width);
+	height: var(--illustration-height);
 	margin: auto;
 	background-image: v-bind(illustration);
 	background-color: yellow;
-	background-size: calc(v-bind(illustration_scale) * 100%);
-	background-position: v-bind(illustration_position.x) v-bind(illustration_position.y);
+	background-size: v-bind(illustrationBgSize);
+	background-position: v-bind(illustrationBgPosX) v-bind(illustrationBgPosY);
 	background-repeat: no-repeat;
 	cursor: grab;
 }
 
 .rendering.extended-art .illustration {
-	width: calc(100% + 2mm * v-bind(renderMargin) * v-bind(scale));
-	background-size: calc(
-		v-bind(illustration_scale) * (100% - 2mm * v-bind(renderMargin) * v-bind(scale))
-	);
-	background-position: calc(v-bind(illustration_position.x) + 1mm * v-bind(renderMargin) * v-bind(scale))
-		calc(v-bind(illustration_position.y));
-	left: calc(-1mm * v-bind(renderMargin) * v-bind(scale));
-	right: calc(-1mm * v-bind(renderMargin) * v-bind(scale));
+	width: v-bind(extendedArtWidth);
+	background-size: v-bind(extendedArtBgSize);
+	background-position: v-bind(extendedArtBgPosX) v-bind(extendedArtBgPosY);
+	left: v-bind(extendedArtNegativeOffset);
+	right: v-bind(extendedArtNegativeOffset);
 }
 
 .rendering.full-art:not(.full-footer):not(.japanese-archive) .illustration {
-	width: calc(100% + 2mm * v-bind(renderMargin) * v-bind(scale));
-	height: calc(100% + 2mm * v-bind(renderMargin) * v-bind(scale));
-	background-size: calc(
-		v-bind(illustration_scale) * (100% - 2mm * v-bind(renderMargin) * v-bind(scale))
-	);
-	background-position: calc(v-bind(illustration_position.x) + 1mm * v-bind(renderMargin) * v-bind(scale))
-		calc(v-bind(illustration_position.y) + 1mm * v-bind(renderMargin) * v-bind(scale));
-	top: calc(-1mm * v-bind(renderMargin) * v-bind(scale));
-	bottom: calc(-1mm * v-bind(renderMargin) * v-bind(scale));
-	left: calc(-1mm * v-bind(renderMargin) * v-bind(scale));
-	right: calc(-1mm * v-bind(renderMargin) * v-bind(scale));
+	width: v-bind(extendedArtWidth);
+	height: v-bind(extendedArtWidth);
+	background-size: v-bind(extendedArtBgSize);
+	background-position: v-bind(fullArtBgPosX) v-bind(fullArtBgPosY);
+	top: v-bind(extendedArtNegativeOffset);
+	bottom: v-bind(extendedArtNegativeOffset);
+	left: v-bind(extendedArtNegativeOffset);
+	right: v-bind(extendedArtNegativeOffset);
 }
 
 .japanese-archive .name {
 	background-color: v-bind(japanese_color);
 	background-image: v-bind(japanese_name_color);
-	color: #fff;
-	padding: 1mm 2mm;
-	border-radius: 1.5mm;
+	color: var(--color-white);
+	padding: var(--spacing-md) var(--spacing-lg);
+	border-radius: var(--radius-lg);
 	outline-style: solid;
 	outline-color: v-bind(japanese_color);
-	outline-width: 0.6mm;
-	outline-offset: 0.4mm;
+	outline-width: var(--border-thick);
+	outline-offset: var(--spacing-xs);
 }
 
 .japanese-archive .top-line .mana-cost .ms {
-	width: 4.2mm;
+	width: var(--mana-symbol-width);
 }
 
 .japanese-archive .type-line,
 .japanese-archive .oracle {
-	background-color: #ffffffa0;
-	border: 0.22mm solid v-bind(japanese_color);
+	background-color: var(--color-white-alpha);
+	border: var(--border-thin) solid v-bind(japanese_color);
 }
 
 .japanese-archive .oracle {
-	outline: #0005;
+	outline: var(--color-shadow);
 	outline-width: 0.1mm;
-	outline-offset: -0.6mm;
+	outline-offset: calc(-1 * var(--border-thick));
 	outline-style: solid;
-	padding: 0.4mm 0.8mm;
+	padding: var(--spacing-xs) 0.8mm;
 	box-sizing: border-box;
 
 	border-image-source: v-bind(japanese_oracle_border);
 	border-image-slice: 10%;
-	border-image-width: 0.22mm;
+	border-image-width: var(--border-thin);
 	border-image-repeat: round;
 }
 
 .japanese-archive .type-line {
-	border-radius: 1mm/50%;
+	border-radius: var(--spacing-md) / 50%;
 	position: absolute;
-	left: 0.4mm;
-	padding: 0 3mm;
-	height: 4mm;
-	line-height: 4mm;
+	left: var(--spacing-xs);
+	padding: 0 var(--spacing-xl);
+	height: var(--top-line-top);
+	line-height: var(--top-line-top);
 	max-width: 40mm;
 
 	border-image-source: v-bind(japanese_type_line_border);
 	border-image-slice: 50% 50%;
-	border-image-width: 50% 1.5mm;
+	border-image-width: 50% var(--radius-lg);
 }
 
 .full-footer .illustration,
@@ -580,11 +603,11 @@ defineExpose({
 
 .inner-background {
 	position: absolute;
-	left: calc((63.5mm - 58.5mm) / 2);
-	width: 58.5mm;
-	height: 78mm;
+	left: calc((var(--card-width) - var(--card-inner-width)) / 2);
+	width: var(--card-inner-width);
+	height: var(--card-inner-height);
 	margin: auto;
-	border-radius: 0.75mm 0.75mm 4mm 4mm;
+	border-radius: var(--radius-sm) var(--radius-sm) var(--radius-xl) var(--radius-xl);
 	overflow-y: visible;
 	background-image: v-bind(background);
 	background-size: 100%;
@@ -598,12 +621,12 @@ defineExpose({
 .inner-frame {
 	position: absolute;
 	margin: auto;
-	width: calc(58.5mm * 0.98);
+	width: calc(var(--card-inner-width) * 0.98);
 	top: 3.5mm;
-	left: calc((63.5mm - 58.5mm * 0.98) / 2);
+	left: calc((var(--card-width) - var(--card-inner-width) * 0.98) / 2);
 	height: 79mm;
 	filter: drop-shadow(-0.25mm 0.25mm 0.15mm black)
-		drop-shadow(0.1mm -0.2mm 0.1mm #ffffffa0);
+		drop-shadow(0.1mm -0.2mm 0.1mm var(--color-white-alpha));
 	background-image: v-bind(frame);
 	background-size: 100%;
 	background-repeat: no-repeat;
@@ -614,8 +637,8 @@ defineExpose({
 
 .legendary-crown {
 	position: absolute;
-	left: 1mm;
-	top: 1.5mm;
+	left: var(--spacing-md);
+	top: var(--radius-lg);
 	width: 61.1mm;
 	height: 14mm;
 	background-image: v-bind(legendary_crown);
@@ -802,13 +825,13 @@ defineExpose({
 	top: 0;
 	left: 0;
 	z-index: 4;
-	width: 63.5mm;
+	width: var(--card-width);
 	height: 100%;
-	opacity: v-bind(debug_opacity);
+	opacity: v-bind(debugOpacity);
 }
 
 .background-color {
-	fill: #ecdfbf;
+	fill: var(--color-bg-primary);
 	filter: url(#noise);
 }
 </style>
