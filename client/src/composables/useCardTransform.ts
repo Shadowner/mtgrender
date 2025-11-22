@@ -38,7 +38,7 @@ export function useCardTransform(
 		if (!card_face.value?.mana_cost) return [];
 		return [...card_face.value.mana_cost.matchAll(mana_regex)].map((m) =>
 			['archive', 'japanese-archive'].includes(card_face.value?.art_variant)
-				? new URL(`/assets/img/archives_symbols/${m[1]}.svg`, import.meta.url).href
+				? `/assets/img/archives_symbols/${m[1]}.svg`
 				: mana_symbols[m[0]].svg_uri
 		);
 	});

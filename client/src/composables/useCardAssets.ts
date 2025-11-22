@@ -59,12 +59,9 @@ export function useCardAssets(
 			? 'ixalan_bg'
 			: 'bg';
 		return `url(${
-			new URL(
 				`/assets/img/${folder}/${
 					is_vehicle.value ? 'Vehicle' : boxes_colors.value
-				}.webp`,
-				import.meta.url
-			).href
+				}.webp`
 		})`;
 	});
 
@@ -92,10 +89,7 @@ export function useCardAssets(
 			colors.value === 'Artifact' && card_face.value?.colors?.length === 1
 				? card_face.value.colors[0]
 				: colors.value;
-		return `url(${
-			new URL(`/assets/img/${folder}/${frameColors}.webp`, import.meta.url)
-				.href
-		})`;
+		return `url(/assets/img/${folder}/${frameColors}.webp)`;
 	});
 
 	const boxes = computed(() => {
@@ -108,22 +102,12 @@ export function useCardAssets(
 			: extended_art.value && !is_class.value
 			? 'extended_boxes'
 			: 'boxes';
-		return `url(${
-			new URL(
-				`/assets/img/${folder}/${boxes_colors.value}.webp`,
-				import.meta.url
-			).href
-		})`;
+		return `url(/assets/img/${folder}/${boxes_colors.value}.webp)`;
 	});
 
 	const mid_boxes = computed(() => {
 		return extended_art.value && !is_planeswalker.value && !is_class.value
-			? `url(${
-					new URL(
-						`/assets/img/extended_boxes/${boxes_colors.value}.webp`,
-						import.meta.url
-					).href
-			  })`
+			? `url(/assets/img/extended_boxes/${boxes_colors.value}.webp)`
 			: boxes.value;
 	});
 
@@ -135,67 +119,41 @@ export function useCardAssets(
 		const folder = extended_art.value
 			? 'extended_legendary_crowns'
 			: 'legendary_crowns';
-		return `url(${
-			new URL(`/assets/img/${folder}/${crownColors}.webp`, import.meta.url)
-				.href
-		})`;
+		return `url(/assets/img/${folder}/${crownColors}.webp)`;
 	});
 
 	const pt_box = computed(() => {
 		return `url(${
-			new URL(
 				`/assets/img/${
 					(is_mdfc.value || is_transform.value) && currentFace.value === 1
 						? 'transform_back_pt_boxes'
 						: 'pt_boxes'
-				}/${is_vehicle.value ? 'Vehicle' : boxes_colors.value}.webp`,
-				import.meta.url
-			).href
+				}/${is_vehicle.value ? 'Vehicle' : boxes_colors.value}.webp`
 		})`;
 	});
 
 	const saga_text_box = computed(() => {
-		return `url(${
-			new URL(
-				`/assets/img/saga_textboxes/${boxes_colors.value}.webp`,
-				import.meta.url
-			).href
-		})`;
+		return `url(/assets/img/saga_textboxes/${boxes_colors.value}.webp)`;
 	});
 
 	const mdfc_icon = computed(() => {
-		return `url(${
-			new URL(
-				`/assets/img/mdfc${currentFace.value === 0 ? '' : '_back'}_icons/${
-					boxes_colors.value === 'Land' ? colors.value : boxes_colors.value
-				}.webp`,
-				import.meta.url
-			).href
-		})`;
+		return `url(/assets/img/mdfc${currentFace.value === 0 ? '' : '_back'}_icons/${
+			boxes_colors.value === 'Land' ? colors.value : boxes_colors.value
+		}.webp)`;
 	});
 
 	const mdfc_hint = computed(() => {
 		let hintColors = compute_colors(back_face.value);
 		if (hintColors.length > 1 && hintColors.length < 5) hintColors = 'Gold';
-		return `url(${
-			new URL(
-				`/assets/img/mdfc${
-					currentFace.value === 0 ? '' : '_back'
-				}_hints/${hintColors}.webp`,
-				import.meta.url
-			).href
-		})`;
+		return `url(/assets/img/mdfc${
+			currentFace.value === 0 ? '' : '_back'
+		}_hints/${hintColors}.webp)`;
 	});
 
 	const transform_icon = computed(() => {
-		return `url(${
-			new URL(
-				`/assets/img/transform${
-					currentFace.value === 0 ? '' : '_back'
-				}_icons/${card.value?.frame_effects?.[0] ?? 'sunmoondfc'}.webp`,
-				import.meta.url
-			).href
-		})`;
+		return `url(/assets/img/transform${
+			currentFace.value === 0 ? '' : '_back'
+		}_icons/${card.value?.frame_effects?.[0] ?? 'sunmoondfc'}.webp)`;
 	});
 
 	const set_icon_uri = computed(() => {

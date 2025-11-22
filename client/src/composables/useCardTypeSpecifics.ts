@@ -69,10 +69,7 @@ export function useCardTypeSpecifics(
 						.split(',')
 						.map(
 							(s: string) =>
-								new URL(
-									`/assets/img/saga/${s.trim()}.webp`,
-									import.meta.url
-								).href
+									`/assets/img/saga/${s.trim()}.webp`
 						),
 					html: m![2],
 				};
