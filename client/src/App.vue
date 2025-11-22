@@ -249,6 +249,7 @@
 		</div>
 
 
+	<AppFooter />
 	</div>
 </template>
 
@@ -261,6 +262,7 @@ import CardStore from './components/CardStore.vue';
 import RenderSettings from './components/RenderSettings.vue';
 import IllustrationEditor from './components/IllustrationEditor.vue';
 import AppHeader from './components/AppHeader.vue';
+import AppFooter from './components/AppFooter.vue';
 import CardSearchInput from './components/CardSearchInput.vue';
 import CardTabs from './components/CardTabs.vue';
 import Combobox from './components/ui/Combobox.vue';
